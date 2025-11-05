@@ -322,50 +322,60 @@ def handle_text(message):
     elif state['action'] == 'reserve_book':
         handle_reserve_book(message, user_text)
 
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
+def handle_take_book(message, state, user_text):
+    chat_id = message.chat.id
+    
+    if state['step'] == 'book_name':
+        data = load_data()
+        if user_text not in data["books"]:
+            bot.send_message(chat_id, "❌ Такой книги нет в библиотеке!")
+            user_states.pop(chat_id, None)
+            return
+        
+        if data["books"][user_text].get("taken"):
+            bot.send_message(chat_id, "❌ Эта книга уже занята!")
+            user_states.pop(chat_id, None)
+            return
+        
+        user_states[chat_id]['book_name'] = user_text
+        user_states[chat_id]['step'] = 'person_name'
+        bot.send_message(chat_id, "👤 Ваше имя:", reply_markup=get_cancel_keyboard())
+    
     elif state['step'] == 'person_name':
-    ^^^^
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
-  File "/app/bot.py", line 345
-    elif state['step'] == 'person_name':
-    ^^^^
-SyntaxError: invalid syntax
+        user_states[chat_id]['person_name'] = user_text
+        user_states[chat_id]['step'] = 'due_date'
+        bot.send_message(chat_id, "📅 До какого числа берете книгу (в формате ДД.ММ.ГГГГ):", reply_markup=get_cancel_keyboard())
+    
+    elif state['step'] == 'due_date':
+        try:
+            due_date = datetime.datetime.strptime(user_text, "%d.%m.%Y").date()
+            today = datetime.date.today()
+            
+            if due_date <= today:
+                bot.send_message(chat_id, "❌ Дата должна быть в будущем! Попробуйте снова:")
+                return
+            
+            # Сохраняем взятие книги
+            data = load_data()
+            book_name = user_states[chat_id]['book_name']
+            data["books"][book_name]["taken"] = True
+            data["books"][book_name]["taken_by"] = user_states[chat_id]['person_name']
+            data["books"][book_name]["taken_by_id"] = message.from_user.id
+            data["books"][book_name]["due_date"] = user_text
+            save_data(data)
+            
+            is_admin = message.from_user.id in ADMIN_IDS
+            bot.send_message(chat_id, 
+                f"✅ Книга '{book_name}' успешно взята!\n"
+                f"👤 Читатель: {user_states[chat_id]['person_name']}\n"
+                f"📅 Вернуть до: {user_text}",
+                reply_markup=get_main_keyboard(is_admin))
+            
+        except ValueError:
+            bot.send_message(chat_id, "❌ Неправильный формат даты! Используйте ДД.ММ.ГГГГ:")
+            return
+        
+        user_states.pop(chat_id, None)
 
 def handle_take_book(message, state, user_text):
     chat_id = message.chat.id
@@ -618,6 +628,7 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
