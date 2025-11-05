@@ -1,3 +1,4 @@
+✌️❗️®️🅰️🫷, [05.11.2025 16:56]
 import logging
 import json
 import datetime
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 BOT_TOKEN = os.environ.get('BOT_TOKEN', '8476080850:AAHBhfAUmgbnNlhmfSS1n6fw4lqMk9xK6a8')
-ADMIN_IDS = [986688734, 5412048228, 901147670, 5082760438]  # Замени на свой ID
+ADMIN_IDS = [123456789]  # Замени на свой ID
 
 bot = TeleBot(BOT_TOKEN)
 
@@ -119,7 +120,10 @@ def take_book_start(message):
 # Обработка кнопки "Вернуть книгу"
 @bot.message_handler(func=lambda message: message.text == "📖 Вернуть книгу")
 def return_book_start(message):
-    user_states[message.chat.id] = {'action': 'return_book', 'step': 'book_name'}
+    user_states[message.chat.
+
+✌️❗️®️🅰️🫷, [05.11.2025 16:56]
+id] = {'action': 'return_book', 'step': 'book_name'}
     bot.send_message(message.chat.id, "📖 Напишите название книги которую возвращаете:", reply_markup=get_cancel_keyboard())
 
 # Обработка кнопки "Поиск книг"
@@ -212,7 +216,10 @@ def delete_book_start(message):
 
 # Обработка кнопки "Отмена"
 @bot.message_handler(func=lambda message: message.text == "❌ Отмена")
-def cancel(message):user_states.pop(message.chat.id, None)
+def cancel(message):
+
+✌️❗️®️🅰️🫷, [05.11.2025 16:56]
+user_states.pop(message.chat.id, None)
     is_admin = message.from_user.id in ADMIN_IDS
     bot.send_message(message.chat.id, "❌ Действие отменено", reply_markup=get_main_keyboard(is_admin))
 
@@ -318,7 +325,10 @@ def handle_return_book(message, state, user_text):
         
         user_states[chat_id]['book_name'] = user_text
         user_states[chat_id]['step'] = 'location'
-        bot.send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
+        bot.
+
+✌️❗️®️🅰️🫷, [05.11.2025 16:56]
+send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
     
     elif state['step'] == 'location':
         # Сохраняем возврат книги
@@ -421,7 +431,9 @@ def handle_rate_book(message, state, user_text):
         bot.send_message(chat_id, 
             f"✅ Спасибо! Вы поставили {score} ⭐ книге '{book_name}'\n"
             f"📊 Средний рейтинг: {avg_rating:.1f}/5",
-        reply_markup=get_main_keyboard(is_admin))
+
+✌️❗️®️🅰️🫷, [05.11.2025 16:56]
+reply_markup=get_main_keyboard(is_admin))
         
         user_states.pop(chat_id, None)
 
