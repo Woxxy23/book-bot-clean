@@ -116,28 +116,26 @@ def all_books(message):
     books_text = "📚 Список всех книг:\n\n"
     
     for book_name, book_info in data["books"].items():
-        books_text += f"📖 {book_name}\n"
-        if book_info.get("author"):
-            books_text += f"   ✍️ Автор: {book_info['author']}\n"
-        
-        # Рейтинг
-        ratings = book_info.get("ratings", {})
-        if ratings:
-            avg_rating = sum(ratings.values()) / len(ratings)
-            books_text += f"   ⭐ Рейтинг: {avg_rating:.1f}/5\n"
-        
-        if book_info.get("taken"):
-            books_text += f"   ❌ Занята\n"
-            books_text += f"   👤 У: {book_info.get('taken_by', 'Неизвестно')}\n"
-            books_text += f"   📅 До: {book_info.get('due_date', 'Не указано')}\n"
-            if book_info.
-
-get("reserved"):
-                books_text += f"   📌 Забронирована: {book_info.get('reserved_by', 'Кем-то')}\n"
-        else:
-            books_text += f"   ✅ Доступна\n"
-            books_text += f"   🏢 Место: {book_info.get('location', 'Не указано')}\n"
-        books_text += "\n"
+    books_text += f"📖 {book_name}\n"
+    if book_info.get("author"):
+        books_text += f"   ✍️ Автор: {book_info['author']}\n"
+    
+    # Рейтинг
+    ratings = book_info.get("ratings", {})
+    if ratings:
+        avg_rating = sum(ratings.values()) / len(ratings)
+        books_text += f"   ⭐ Рейтинг: {avg_rating:.1f}/5\n"
+    
+    if book_info.get("taken"):
+        books_text += f"   ❌ Занята\n"
+        books_text += f"   👤 У: {book_info.get('taken_by', 'Неизвестно')}\n"
+        books_text += f"   📅 До: {book_info.get('due_date', 'Не указано')}\n"
+        if book_info.get("reserved"):
+            books_text += f"   📌 Забронирована: {book_info.get('reserved_by', 'Кем-то')}\n"
+    else:
+        books_text += f"   ✅ Доступна\n"
+        books_text += f"   🏢 Место: {book_info.get('location', 'Не указано')}\n"
+    books_text += "\n"
     
     bot.send_message(message.chat.id, books_text)
 
@@ -633,3 +631,4 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
