@@ -332,7 +332,7 @@ def handle_take_book(message, state, user_text):
             user_states.pop(chat_id, None)
             return
             
-            if data["books"][user_text].get("taken"):
+if data["books"][user_text].get("taken"):
     bot.send_message(chat_id, "❌ Эта книга уже занята!")
     user_states.pop(chat_id, None)
     return
@@ -629,6 +629,7 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
