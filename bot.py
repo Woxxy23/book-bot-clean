@@ -121,7 +121,6 @@ def take_book_start(message):
 def return_book_start(message):
     user_states[message.chat.
 
-✌️❗️®️🅰️🫷, [05.11.2025 16:56]
 id] = {'action': 'return_book', 'step': 'book_name'}
     bot.send_message(message.chat.id, "📖 Напишите название книги которую возвращаете:", reply_markup=get_cancel_keyboard())
 
@@ -217,7 +216,6 @@ def delete_book_start(message):
 @bot.message_handler(func=lambda message: message.text == "❌ Отмена")
 def cancel(message):
 
-✌️❗️®️🅰️🫷, [05.11.2025 16:56]
 user_states.pop(message.chat.id, None)
     is_admin = message.from_user.id in ADMIN_IDS
     bot.send_message(message.chat.id, "❌ Действие отменено", reply_markup=get_main_keyboard(is_admin))
@@ -326,7 +324,6 @@ def handle_return_book(message, state, user_text):
         user_states[chat_id]['step'] = 'location'
         bot.
 
-✌️❗️®️🅰️🫷, [05.11.2025 16:56]
 send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
     
     elif state['step'] == 'location':
@@ -431,7 +428,6 @@ def handle_rate_book(message, state, user_text):
             f"✅ Спасибо! Вы поставили {score} ⭐ книге '{book_name}'\n"
             f"📊 Средний рейтинг: {avg_rating:.1f}/5",
 
-✌️❗️®️🅰️🫷, [05.11.2025 16:56]
 reply_markup=get_main_keyboard(is_admin))
         
         user_states.pop(chat_id, None)
@@ -503,6 +499,7 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
