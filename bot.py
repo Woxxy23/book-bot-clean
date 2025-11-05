@@ -49,13 +49,13 @@ def get_main_keyboard(is_admin=False):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         markup.add("📚 Взять книгу", "📖 Вернуть книгу")
         markup.add("🔍 Поиск книг", "⭐ Оценить книгу")
-        markup.add("📋 Все книги", "📅 Мои забронированые книги")
+        markup.add("📋 Все книги", "📅 Мои книги")
         markup.add("➕ Добавить книгу", "🗑️ Удалить книгу")
     else:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         markup.add("📚 Взять книгу", "📖 Вернуть книгу")
         markup.add("🔍 Поиск книг", "⭐ Оценить книгу")
-        markup.add("📋 Все книги", "📅 Мои забронированые книги")
+        markup.add("📋 Все книги", "📅 Мои книги")
     markup.add("❌ Отмена")
     return markup
 
@@ -561,3 +561,4 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
