@@ -377,7 +377,7 @@ elif state['step'] == 'person_name':
         
         user_states.pop(chat_id, None)
 
-def handle_return_book(message, state, user_text):
+def handle_take_book(message, state, user_text):
     chat_id = message.chat.id
     
     if state['step'] == 'book_name':
@@ -387,50 +387,48 @@ def handle_return_book(message, state, user_text):
             user_states.pop(chat_id, None)
             return
         
-        if not data["books"][user_text].get("taken"):
-            bot.send_message(chat_id, "❌ Эта книга уже в библиотеке!")
+        if data["books"][user_text].get("taken"):
+            bot.send_message(chat_id, "❌ Эта книга уже занята!")
             user_states.pop(chat_id, None)
             return
         
         user_states[chat_id]['book_name'] = user_text
-        user_states[chat_id]['step'] = 'location'
-        bot.send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
+        user_states[chat_id]['step'] = 'person_name'
+        bot.send_message(chat_id, "👤 Ваше имя:", reply_markup=get_cancel_keyboard())
     
-    elif state['step'] == 'location':
-        # Сохраняем возврат книги
-        data = load_data()
-        book_name = user_states[chat_id]['book_name']
-        data["books"][book_name]["taken"] = False
-        data["books"][book_name]["taken_by"] = ""
-        data["books"][book_name]["taken_by_id"] = ""
-        data["books"][book_name]["due_date"] = ""
-        data["books"][book_name]["location"] = user_text
-        
-        # 🔔 УВЕДОМЛЕНИЕ ДЛЯ ТОГО, КТО ЗАБРОНИРОВАЛ
-        reserved_by_id = data["books"][book_name].get("reserved_by_id")
-        if reserved_by_id:
-            try:
-                bot.send_message(
-                    reserved_by_id,
-                    f"🔔 Книга '{book_name}' которую вы бронировали теперь доступна!\n"
-                    f"🏢 Находится: {user_text}\n"
-                    f"📚 Можете взять её в библиотеке!"
-                )
-                # Снимаем бронь после уведомления
-                data["books"][book_name]["reserved"] = False
-                data["books"][book_name]["reserved_by"] = ""
-                data["books"][book_name]["reserved_by_id"] = ""
-            except Exception as e:
-                logger.error(f"Не удалось отправить уведомление: {e}")
-        
-        save_data(data)
-        
-        is_admin = message.from_user.id in ADMIN_IDS
-        bot.send_message(chat_id,
-
-f"✅ Книга '{book_name}' возвращена!\n"
-            f"🏢 Место: {user_text}",
-            reply_markup=get_main_keyboard(is_admin))
+    elif state['step'] == 'person_name':
+        user_states[chat_id]['person_name'] = user_text
+        user_states[chat_id]['step'] = 'due_date'
+        bot.send_message(chat_id, "📅 До какого числа берете книгу (в формате ДД.ММ.ГГГГ):", reply_markup=get_cancel_keyboard())
+    
+    elif state['step'] == 'due_date':
+        try:
+            due_date = datetime.datetime.strptime(user_text, "%d.%m.%Y").date()
+            today = datetime.date.today()
+            
+            if due_date <= today:
+                bot.send_message(chat_id, "❌ Дата должна быть в будущем! Попробуйте снова:")
+                return
+            
+            # Сохраняем взятие книги
+            data = load_data()
+            book_name = user_states[chat_id]['book_name']
+            data["books"][book_name]["taken"] = True
+            data["books"][book_name]["taken_by"] = user_states[chat_id]['person_name']
+            data["books"][book_name]["taken_by_id"] = message.from_user.id
+            data["books"][book_name]["due_date"] = user_text
+            save_data(data)
+            
+            is_admin = message.from_user.id in ADMIN_IDS
+            bot.send_message(chat_id, 
+                f"✅ Книга '{book_name}' успешно взята!\n"
+                f"👤 Читатель: {user_states[chat_id]['person_name']}\n"
+                f"📅 Вернуть до: {user_text}",
+                reply_markup=get_main_keyboard(is_admin))
+            
+        except ValueError:
+            bot.send_message(chat_id, "❌ Неправильный формат даты! Используйте ДД.ММ.ГГГГ:")
+            return
         
         user_states.pop(chat_id, None)
 
@@ -630,6 +628,7 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
