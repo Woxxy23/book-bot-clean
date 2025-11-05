@@ -28,7 +28,13 @@ user_states = {}
 def load_data():
     try:
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+            # Миграция для старых данных
+            for book_name, book_info in data.get("books", {}).items():
+                if "taken_by_id" not in book_info and book_info.get("taken_by"):
+                    # Сохраняем имя пользователя как резервный вариант
+                    book_info["taken_by_name"] = book_info.get("taken_by", "")
+            return data
     except FileNotFoundError:
         return {"books": {}}
 
@@ -43,13 +49,13 @@ def get_main_keyboard(is_admin=False):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         markup.add("📚 Взять книгу", "📖 Вернуть книгу")
         markup.add("🔍 Поиск книг", "⭐ Оценить книгу")
-        markup.add("📋 Все книги", "📅 Мои книги")
+        markup.add("📋 Все книги", "📅 Мои забронированые книги")
         markup.add("➕ Добавить книгу", "🗑️ Удалить книгу")
     else:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         markup.add("📚 Взять книгу", "📖 Вернуть книгу")
         markup.add("🔍 Поиск книг", "⭐ Оценить книгу")
-        markup.add("📋 Все книги", "📅 Мои книги")
+        markup.add("📋 Все книги", "📅 Мои забронированые книги")
     markup.add("❌ Отмена")
     return markup
 
@@ -70,6 +76,9 @@ def start(message):
     user_id = message.from_user.id
     is_admin = user_id in ADMIN_IDS
     
+    # Проверка просроченных книг
+    check_overdue_books_notification(message)
+    
     if is_admin:
         welcome_text = "👑 Здравствуйте, вы вошли как админ!"
     else:
@@ -77,28 +86,36 @@ def start(message):
     
     bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_keyboard(is_admin))
 
-# Команда для отладки
-@bot.message_handler(commands=['debug'])
-def debug_info(message):
+# Проверка просроченных книг и отправка уведомлений
+def check_overdue_books_notification(message):
     user_id = message.from_user.id
-    first_name = message.from_user.first_name
-    
     data = load_data()
-    my_books = []
+    
+    overdue_books = []
+    today = datetime.date.today()
     
     for book_name, book_info in data["books"].items():
-        if book_info.get("taken_by"):
-            my_books.append(f"{book_name} -> {book_info['taken_by']}")
+        taken_by_id = book_info.get("taken_by_id")
+        if taken_by_id == user_id and book_info.get("taken"):
+            due_date_str = book_info.get("due_date", "")
+            if due_date_str:
+                try:
+                    due_date = datetime.datetime.strptime(due_date_str, "%d.%m.%Y").date()
+                    if due_date < today:
+                        overdue_books.append({
+                            "name": book_name,
+                            "days_overdue": (today - due_date).days
+                        })
+                except ValueError:
+                    continue
     
-    debug_text = f"""
-👤 Ваши данные:
-ID: {user_id}
-Имя: {first_name}
-
-📚 Все занятые книги:
-{chr(10).join(my_books) if my_books else 'Нет занятых книг'}
-"""
-    bot.send_message(message.chat.id, debug_text)
+    if overdue_books:
+        warning_text = "⚠️ <b>ВНИМАНИЕ! У вас есть просроченные книги:</b>\n\n"
+        for book in overdue_books:
+            warning_text += f"📖 {book['name']}\n"
+            warning_text += f"   ⌛ Просрочено на {book['days_overdue']} дней\n\n"
+        warning_text += "⚠️ Пожалуйста, верните книги как можно скорее!"
+        bot.send_message(message.chat.id, warning_text, parse_mode='HTML')
 
 # Обработка кнопки "Все книги"
 @bot.message_handler(func=lambda message: message.text == "📋 Все книги")
@@ -109,10 +126,10 @@ def all_books(message):
         bot.send_message(message.chat.id, "📚 В библиотеке пока нет книг.")
         return
     
-    books_text = "📚 Список всех книг:\n\n"
+    books_text = "📚 <b>Список всех книг:</b>\n\n"
     
     for book_name, book_info in data["books"].items():
-        books_text += f"📖 {book_name}\n"
+        books_text += f"📖 <b>{book_name}</b>\n"
         if book_info.get("author"):
             books_text += f"   ✍️ Автор: {book_info['author']}\n"
         
@@ -123,15 +140,16 @@ def all_books(message):
             books_text += f"   ⭐ Рейтинг: {avg_rating:.1f}/5\n"
         
         if book_info.get("taken"):
+            taken_by = book_info.get("taken_by_name", "Неизвестно")
             books_text += f"   ❌ Занята\n"
-            books_text += f"   👤 У: {book_info.get('taken_by', 'Неизвестно')}\n"
+            books_text += f"   👤 У: {taken_by}\n"
             books_text += f"   📅 До: {book_info.get('due_date', 'Не указано')}\n"
         else:
             books_text += f"   ✅ Доступна\n"
             books_text += f"   🏢 Место: {book_info.get('location', 'Не указано')}\n"
         books_text += "\n"
-
-bot.send_message(message.chat.id, books_text)
+    
+    bot.send_message(message.chat.id, books_text, parse_mode='HTML')
 
 # Обработка кнопки "Взять книгу"
 @bot.message_handler(func=lambda message: message.text == "📚 Взять книгу")
@@ -164,29 +182,32 @@ def rate_book_start(message):
     user_states[message.chat.id] = {'action': 'rate_book', 'step': 'book_name'}
     bot.send_message(message.chat.id, f"⭐ Какую книгу хотите оценить?\n\n{books_list}", reply_markup=get_cancel_keyboard())
 
-# Обработка кнопки "Мои книги"
-@bot.message_handler(func=lambda message: message.text == "📅 Мои книги")
+# Обработка кнопки "Мои книги" - ИСПРАВЛЕННАЯ ВЕРСИЯ
+@bot.message_handler(func=lambda message: message.text == "📅 Мои забронированые книги")
 def my_books(message):
     user_id = message.from_user.id
     user_name = message.from_user.first_name
     data = load_data()
     
     my_books_list = []
-    
-    # Ищем книги по ID пользователя
     for book_name, book_info in data["books"].items():
-        if (book_info.get("taken_by") == user_name or 
-            str(book_info.get("taken_by_id")) == str(user_id)):
+        # Проверяем по ID пользователя (новый способ) или по имени (старый способ для совместимости)
+        taken_by_id = book_info.get("taken_by_id")
+        taken_by_name = book_info.get("taken_by_name", "")
+        
+        if (taken_by_id == user_id or taken_by_name == user_name) and book_info.get("taken"):
             my_books_list.append((book_name, book_info))
     
     if not my_books_list:
         bot.send_message(message.chat.id, "📚 У вас нет взятых книг.")
         return
     
-    result_text = f"📅 Ваши книги ({len(my_books_list)}):\n\n"
+    result_text = f"📅 <b>Ваши книги ({len(my_books_list)}):</b>\n\n"
+    has_overdue = False
+    overdue_books = []
     
     for book_name, book_info in my_books_list:
-        result_text += f"📖 {book_name}\n"
+        result_text += f"📖 <b>{book_name}</b>\n"
         due_date = book_info.get("due_date", "")
         if due_date:
             try:
@@ -195,9 +216,11 @@ def my_books(message):
                 days_left = (due_date_obj - today).days
                 
                 if days_left < 0:
-                    result_text += f"   ⚠️ ПРОСРОЧЕНО на {abs(days_left)} дней!\n"
+                    result_text += f"   ⚠️ <b>ПРОСРОЧЕНО на {abs(days_left)} дней!</b>\n"
+                    has_overdue = True
+                    overdue_books.append(book_name)
                 elif days_left == 0:
-                    result_text += f"   🔥 Вернуть СЕГОДНЯ!\n"
+                    result_text += f"   🔥 <b>Вернуть СЕГОДНЯ!</b>\n"
                 elif days_left <= 3:
                     result_text += f"   ⚠️ Вернуть через {days_left} дня\n"
                 else:
@@ -207,7 +230,22 @@ def my_books(message):
         
         result_text += "\n"
     
-    bot.send_message(message.chat.id, result_text)
+    # Добавляем общее предупреждение если есть просроченные книги
+    if has_overdue:
+        warning_text = "\n⚠️ <b>ВНИМАНИЕ! У вас есть просроченные книги. Пожалуйста, верните их как можно скорее!</b>"
+        result_text += warning_text
+    
+    bot.send_message(message.chat.id, result_text, parse_mode='HTML')
+    
+    # Отправляем отдельное уведомление для каждой просроченной книги
+    for overdue_book in overdue_books:
+        bot.send_message(
+            message.chat.id,
+            f"🚨 <b>СРОЧНОЕ УВЕДОМЛЕНИЕ</b>\n\n"
+            f"Книга '<b>{overdue_book}</b>' просрочена!\n"
+            f"Пожалуйста, верните книгу в библиотеку как можно скорее!",
+            parse_mode='HTML'
+        )
 
 # Обработка кнопки "Добавить книгу" (только для админов)
 @bot.message_handler(func=lambda message: message.text == "➕ Добавить книгу")
@@ -223,8 +261,7 @@ def add_book_start(message):
 # Обработка кнопки "Удалить книгу" (только для админов)
 @bot.message_handler(func=lambda message: message.text == "🗑️ Удалить книгу")
 def delete_book_start(message):
-
-user_id = message.from_user.id
+    user_id = message.from_user.id
     if user_id not in ADMIN_IDS:
         bot.send_message(message.chat.id, "❌ Эта функция только для администраторов!")
         return
@@ -313,8 +350,8 @@ def handle_take_book(message, state, user_text):
             data = load_data()
             book_name = user_states[chat_id]['book_name']
             data["books"][book_name]["taken"] = True
-            data["books"][book_name]["taken_by"] = user_states[chat_id]['person_name']
             data["books"][book_name]["taken_by_id"] = message.from_user.id
+            data["books"][book_name]["taken_by_name"] = user_states[chat_id]['person_name']
             data["books"][book_name]["due_date"] = user_text
             save_data(data)
             
@@ -324,11 +361,9 @@ def handle_take_book(message, state, user_text):
                 f"👤 Читатель: {user_states[chat_id]['person_name']}\n"
                 f"📅 Вернуть до: {user_text}",
                 reply_markup=get_main_keyboard(is_admin))
-        
+            
         except ValueError:
-            bot.
-
-send_message(chat_id, "❌ Неправильный формат даты! Используйте ДД.ММ.ГГГГ:")
+            bot.send_message(chat_id, "❌ Неправильный формат даты! Используйте ДД.ММ.ГГГГ:")
             return
         
         user_states.pop(chat_id, None)
@@ -347,7 +382,7 @@ def handle_return_book(message, state, user_text):
             bot.send_message(chat_id, "❌ Эта книга уже в библиотеке!")
             user_states.pop(chat_id, None)
             return
-        
+
         user_states[chat_id]['book_name'] = user_text
         user_states[chat_id]['step'] = 'location'
         bot.send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
@@ -357,8 +392,8 @@ def handle_return_book(message, state, user_text):
         data = load_data()
         book_name = user_states[chat_id]['book_name']
         data["books"][book_name]["taken"] = False
-        data["books"][book_name]["taken_by"] = ""
-        data["books"][book_name]["taken_by_id"] = ""
+        data["books"][book_name]["taken_by_id"] = None
+        data["books"][book_name]["taken_by_name"] = ""
         data["books"][book_name]["due_date"] = ""
         data["books"][book_name]["location"] = user_text
         save_data(data)
@@ -403,8 +438,8 @@ def handle_search(message, user_text):
             else:
                 result_text += f"   ✅ Доступна\n"
             result_text += "\n"
-            
-            if len(found_books) > 10:
+        
+        if len(found_books) > 10:
             result_text += f"... и ещё {len(found_books) - 10} книг\n"
         
         bot.send_message(chat_id, result_text, reply_markup=get_main_keyboard(message.from_user.id in ADMIN_IDS))
@@ -431,7 +466,7 @@ def handle_rate_book(message, state, user_text):
             score = int(score_text)
             if score < 1 or score > 5:
                 raise ValueError
-                except:
+        except:
             bot.send_message(chat_id, "❌ Пожалуйста, выберите оценку от 1 до 5:")
             return
         
@@ -488,9 +523,10 @@ def handle_add_book(message, state, user_text):
             "author": author,
             "location": location,
             "taken": False,
-            "taken_by": "",
-            "taken_by_id": "",
+            "taken_by_id": None,
+            "taken_by_name": "",
             "due_date": "",
+            "reserved": False,
             "ratings": {}
         }
         save_data(data)
@@ -521,21 +557,7 @@ def handle_delete_book(message, user_text):
     bot.send_message(chat_id, f"✅ Книга '{user_text}' удалена!", reply_markup=get_main_keyboard(is_admin))
     user_states.pop(chat_id, None)
 
+# Запуск бота
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
