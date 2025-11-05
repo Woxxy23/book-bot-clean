@@ -315,9 +315,9 @@ def handle_return_book(message, state, user_text):
             return
         
         if not data["books"][user_text].get("taken"):
-    bot.send_message(chat_id, "❌ Эта книга уже в библиотеке!")
-    user_states.pop(chat_id, None)
-    return
+            bot.send_message(chat_id, "❌ Эта книга уже в библиотеке!")
+            user_states.pop(chat_id, None)
+            return
 
 user_states[chat_id]['book_name'] = user_text
 user_states[chat_id]['step'] = 'location'
@@ -496,6 +496,7 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
