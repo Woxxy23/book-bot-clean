@@ -1,4 +1,3 @@
-✌️❗️®️🅰️🫷, [05.11.2025 16:56]
 import logging
 import json
 import datetime
@@ -504,4 +503,5 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
