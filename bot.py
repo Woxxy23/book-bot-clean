@@ -319,19 +319,20 @@ def handle_return_book(message, state, user_text):
             user_states.pop(chat_id, None)
             return
 
-user_states[chat_id]['book_name'] = user_text
-user_states[chat_id]['step'] = 'location'
-bot.send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
-
-elif state['step'] == 'location':
-    # Сохраняем возврат книги
-    data = load_data()
-    book_name = user_states[chat_id]['book_name']
-    data["books"][book_name]["taken"] = False
-    data["books"][book_name]["taken_by"] = ""
-    data["books"][book_name]["due_date"] = ""
-    data["books"][book_name]["location"] = user_text
-    save_data(data)
+        # ДОБАВЬ ОТСТУПЫ ДЛЯ ЭТИХ 3 СТРОК!
+        user_states[chat_id]['book_name'] = user_text
+        user_states[chat_id]['step'] = 'location'
+        bot.send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
+    
+    elif state['step'] == 'location':
+        # Сохраняем возврат книги
+        data = load_data()
+        book_name = user_states[chat_id]['book_name']
+        data["books"][book_name]["taken"] = False
+        data["books"][book_name]["taken_by"] = ""
+        data["books"][book_name]["due_date"] = ""
+        data["books"][book_name]["location"] = user_text
+        save_data(data)
         
         is_admin = message.from_user.id in ADMIN_IDS
         bot.send_message(chat_id, 
@@ -496,6 +497,7 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
