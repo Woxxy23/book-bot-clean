@@ -115,7 +115,7 @@ def all_books(message):
     
     books_text = "📚 Список всех книг:\n\n"
     
-for book_name, book_info in data["books"].items():
+    for book_name, book_info in data["books"].items():
     books_text += f"📖 {book_name}\n"
     if book_info.get("author"):
         books_text += f"   ✍️ Автор: {book_info['author']}\n"
@@ -627,6 +627,7 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
