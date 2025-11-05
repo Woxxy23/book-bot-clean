@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 BOT_TOKEN = os.environ.get('BOT_TOKEN', '8476080850:AAHBhfAUmgbnNlhmfSS1n6fw4lqMk9xK6a8')
-ADMIN_IDS = [123456789]  # Замени на свой ID
+ADMIN_IDS = [986688734, 5412048228, 901147670, 5082760438]  # Замени на свой ID
 
 bot = TeleBot(BOT_TOKEN)
 
@@ -104,6 +104,7 @@ def cancel(message):
     bot.send_message(message.chat.id, "❌ Действие отменено", reply_markup=get_main_keyboard(is_admin))
 
 # Запуск бота
-if name == "__main__":
+if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
