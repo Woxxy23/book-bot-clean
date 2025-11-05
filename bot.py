@@ -183,7 +183,7 @@ def rate_book_start(message):
     bot.send_message(message.chat.id, f"⭐ Какую книгу хотите оценить?\n\n{books_list}", reply_markup=get_cancel_keyboard())
 
 # Обработка кнопки "Мои книги" - ИСПРАВЛЕННАЯ ВЕРСИЯ
-@bot.message_handler(func=lambda message: message.text == "📅 Мои забронированые книги")
+@bot.message_handler(func=lambda message: message.text == "📅 Мои книги")
 def my_books(message):
     user_id = message.from_user.id
     user_name = message.from_user.first_name
