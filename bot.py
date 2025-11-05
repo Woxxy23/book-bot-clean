@@ -331,23 +331,24 @@ def handle_take_book(message, state, user_text):
             bot.send_message(chat_id, "❌ Такой книги нет в библиотеке!")
             user_states.pop(chat_id, None)
             return
-
-if data["books"][user_text].get("taken"):
+            
+            if data["books"][user_text].get("taken"):
     bot.send_message(chat_id, "❌ Эта книга уже занята!")
     user_states.pop(chat_id, None)
     return
 
-user_states[chat_id]['book_name'] = user_text  # ← УБЕРИ ЛИШНИЕ ПРОБЕЛЫ!
+user_states[chat_id]['book_name'] = user_text
 user_states[chat_id]['step'] = 'person_name'
 bot.send_message(chat_id, "👤 Ваше имя:", reply_markup=get_cancel_keyboard())
 
+# УДАЛИ эту строку - она должна быть в другом месте!
 elif state['step'] == 'person_name':
     user_states[chat_id]['person_name'] = user_text
     user_states[chat_id]['step'] = 'due_date'
-        bot.send_message(chat_id, "📅 До какого числа берете книгу (в формате ДД.ММ.ГГГГ):", reply_markup=get_cancel_keyboard())
-    
-    elif state['step'] == 'due_date':
-        try:
+    bot.send_message(chat_id, "📅 До какого числа берете книгу (в формате ДД.ММ.ГГГГ):", reply_markup=get_cancel_keyboard())  # ← УБЕРИ ЛИШНИЙ ОТСТУП!
+
+elif state['step'] == 'due_date':
+    try:
             due_date = datetime.datetime.strptime(user_text, "%d.%m.%Y").date()
             today = datetime.date.today()
             
@@ -628,6 +629,7 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
