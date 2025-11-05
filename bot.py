@@ -223,11 +223,9 @@ def my_books(message):
                     result_text += f"   ⚠️ Вернуть через {days_left} дня\n"
                 else:
                     result_text += f"   📅 Вернуть до: {due_date}\n"
-            except:
-
-result_text += f"   📅 Вернуть до: {due_date}\n"
-        
-        result_text += "\n"
+                    except:
+                        result_text += f"   📅 Вернуть до: {due_date}\n"  # ← ДОБАВЬ 4 ПРОБЕЛА ЗДЕСЬ!
+                        result_text += "\n"  # ← ЭТА СТРОКА ДОЛЖНА БЫТЬ С ОТСТУПОМ!
     
     bot.send_message(message.chat.id, result_text)
 
@@ -631,6 +629,7 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
