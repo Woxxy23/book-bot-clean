@@ -213,9 +213,10 @@ def delete_book_start(message):
     bot.send_message(message.chat.id, f"🗑️ Какую книгу удалить?\n\n{books_list}", reply_markup=get_cancel_keyboard())
 
 # Обработка кнопки "Отмена"
-@bot.message_handler(func=lambda message: message.text == "Отмена")
+@bot.message_handler(func=lambda message: message.text == "❌ Отмена")
 def cancel(message):
-    user_states.pop(message.chat.id, None)
+
+user_states.pop(message.chat.id, None)
     is_admin = message.from_user.id in ADMIN_IDS
     bot.send_message(message.chat.id, "❌ Действие отменено", reply_markup=get_main_keyboard(is_admin))
 
@@ -321,10 +322,11 @@ def handle_return_book(message, state, user_text):
         
         user_states[chat_id]['book_name'] = user_text
         user_states[chat_id]['step'] = 'location'
-        bot.infinity_polling()
+        bot.
 
 send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
-        elif state['step'] == 'location':
+    
+    elif state['step'] == 'location':
         # Сохраняем возврат книги
         data = load_data()
         book_name = user_states[chat_id]['book_name']
@@ -497,12 +499,3 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
-
-
-
-
-
-
-
-
-
