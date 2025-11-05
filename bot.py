@@ -215,8 +215,7 @@ def delete_book_start(message):
 # Обработка кнопки "Отмена"
 @bot.message_handler(func=lambda message: message.text == "❌ Отмена")
 def cancel(message):
-
-user_states.pop(message.chat.id,None)
+    user_states.pop(message.chat.id, None)
     is_admin = message.from_user.id in ADMIN_IDS
     bot.send_message(message.chat.id, "❌ Действие отменено", reply_markup=get_main_keyboard(is_admin))
 
@@ -499,4 +498,5 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
