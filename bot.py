@@ -208,26 +208,27 @@ def my_books(message):
     
     for book_name, book_info in my_books_list:
         result_text += f"📖 {book_name}\n"
-        due_date = book_info.get("due_date", "")
-        if due_date:
-            try:
-                due_date_obj = datetime.datetime.strptime(due_date, "%d.%m.%Y").date()
-                today = datetime.date.today()
-                days_left = (due_date_obj - today).days
-                
-                if days_left < 0:
-                    result_text += f"   ⚠️ ПРОСРОЧЕНО на {abs(days_left)} дней!\n"
-                elif days_left == 0:
-                    result_text += f"   🔥 Вернуть СЕГОДНЯ!\n"
-                elif days_left <= 3:
-                    result_text += f"   ⚠️ Вернуть через {days_left} дня\n"
-                else:
-                    result_text += f"   📅 Вернуть до: {due_date}\n"
-                    except:
-                        result_text += f"   📅 Вернуть до: {due_date}\n"  # ← ДОБАВЬ 4 ПРОБЕЛА ЗДЕСЬ!
-                        result_text += "\n"  # ← ЭТА СТРОКА ДОЛЖНА БЫТЬ С ОТСТУПОМ!
-    
-    bot.send_message(message.chat.id, result_text)
+due_date = book_info.get("due_date", "")
+if due_date:
+    try:
+        due_date_obj = datetime.datetime.strptime(due_date, "%d.%m.%Y").date()
+        today = datetime.date.today()
+        days_left = (due_date_obj - today).days
+        
+        if days_left < 0:
+            result_text += f"   ⚠️ ПРОСРОЧЕНО на {abs(days_left)} дней!\n"
+        elif days_left == 0:
+            result_text += f"   🔥 Вернуть СЕГОДНЯ!\n"
+        elif days_left <= 3:
+            result_text += f"   ⚠️ Вернуть через {days_left} дня\n"
+        else:
+            result_text += f"   📅 Вернуть до: {due_date}\n"
+    except:  # ← ВЫНЕСИ ЭТУ СТРОКУ НА УРОВЕНЬ С try!
+        result_text += f"   📅 Вернуть до: {due_date}\n"
+
+    result_text += "\n"  # ← ЭТА СТРОКА ДОЛЖНА БЫТЬ ЗДЕСЬ!
+
+bot.send_message(message.chat.id, result_text)
 
 # Обработка кнопки "Забронировать"
 @bot.message_handler(func=lambda message: message.text == "📌 Забронировать")
@@ -629,6 +630,7 @@ def handle_reserve_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
