@@ -321,7 +321,7 @@ def handle_return_book(message, state, user_text):
         
         user_states[chat_id]['book_name'] = user_text
         user_states[chat_id]['step'] = 'location'
-        bot.
+        bot.infinity_polling()
 
 send_message(chat_id, "🏢 Где оставляете книгу?", reply_markup=get_cancel_keyboard())
     
@@ -498,6 +498,7 @@ def handle_delete_book(message, user_text):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
 
 
 
