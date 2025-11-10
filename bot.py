@@ -165,8 +165,8 @@ def all_books(message):
     
     books_text = "📚 <b>Список всех книг:</b>\n\n"
     
-    for book_name, book_info in data["books"].items():
-        books_text += f"📖 <b>{book_name}</b>\n"
+    for i, (book_name, book_info) in enumerate(data["books"].items(), 1):
+        books_text += f"{i}. 📖 <b>{book_name}</b>\n"
         if book_info.get("author"):
             books_text += f"   ✍️ Автор: {book_info['author']}\n"
         
@@ -190,8 +190,15 @@ def all_books(message):
             books_text += f"   ✅ Доступна\n"
             books_text += f"   🏢 Место: {book_info.get('location', 'Не указано')}\n"
         books_text += "\n"
+        
+        # Если сообщение становится слишком большим, отправляем его и начинаем новое
+        if len(books_text) > 3500:
+            bot.send_message(message.chat.id, books_text, parse_mode='HTML')
+            books_text = f"📚 <b>Продолжение списка книг:</b>\n\n"
     
-    bot.send_message(message.chat.id, books_text, parse_mode='HTML')
+    # Отправляем оставшуюся часть
+    if books_text != "📚 <b>Список всех книг:</b>\n\n":
+        bot.send_message(message.chat.id, books_text, parse_mode='HTML')
 
 # Обработка кнопки "Взять книгу"
 @bot.message_handler(func=lambda message: message.text == "📚 Взять книгу")
@@ -822,3 +829,4 @@ def get_user_position(reservations, user_id):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.infinity_polling()
+
